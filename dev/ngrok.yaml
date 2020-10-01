@@ -1,0 +1,7 @@
+console_ui: false
+log_format: json
+log: ./.debug/ngrok.log
+tunnels:
+  godrunk:
+    addr: 8082
+    proto: http
