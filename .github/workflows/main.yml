@@ -26,8 +26,7 @@ jobs:
         with:
           username: burdikov
           password: ${{ secrets.DOCKERHUBTOKEN }}
-      - uses: docker/build-push-action@v2.1.0
+      - uses: docker/build-push-action@v2
         with:
-          pull: true
           push: true
-          tags: latest
+          tags: burdikov/godrunk:latest
