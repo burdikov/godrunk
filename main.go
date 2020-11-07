@@ -2,25 +2,28 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"godrunk/config"
 	"log"
 	"math/rand"
 	"net/http"
 	"time"
-
-	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-type zupabot struct {
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+type Bot struct {
 	*tgbotapi.BotAPI
 }
 
-type card struct {
-	name        string
-	description string
+type Card struct {
+	Name        string
+	Description string
 }
 
-var cards = []*card{
+var cards = []Card{
 	{"Я", "Этот бокал для тебя."},
 	{"Ты", "Выбери, кто будет пить."},
 	{"Джентльмены", "Все джентльмены за столом пьют."},
@@ -47,15 +50,14 @@ var cards = []*card{
 	{"Товарищ заебал", "Игрок, вытянувший эту карту, становится товарищем. Другим игрокам нельзя отвечать на его вопросы."},
 }
 
-var decks map[int64][]*card = make(map[int64][]*card)
+var decks = make(map[int64][]*Card)
 
-func createDeck() []*card {
-	rand.Seed(time.Now().UnixNano())
-
-	res := make([]*card, 0)
-	for _, card := range cards {
-		for i := 0; i < rand.Intn(5); i++ {
-			res = append(res, card)
+func createDeck() []*Card {
+	maxCards := 5
+	res := make([]*Card, 0, len(cards) * maxCards)
+	for i := 0; i < len(cards); i++ {
+		for j := 0; j < maxCards; j++ {
+			res = append(res, &cards[i])
 		}
 	}
 
@@ -66,41 +68,47 @@ func createDeck() []*card {
 	return res
 }
 
-func (z *zupabot) handleUpdate(update tgbotapi.Update) {
+func (z *Bot) handleUpdate(update tgbotapi.Update) {
 	chatID := update.Message.Chat.ID
 	deck, exists := decks[chatID]
-	if !exists {
-		decks[chatID] = createDeck()
-		deck = decks[chatID]
+	if !exists || len(deck) == 0 {
+		deck = createDeck()
+		decks[chatID] = deck
 	}
-	
-	card:= deck[0]
+
+	card := deck[0]
 	decks[chatID] = deck[1:]
 
-	z.Send(tgbotapi.NewMessage(chatID, card.name))
+	text := fmt.Sprintf("*%v*\n%v", card.Name, card.Description)
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = tgbotapi.ModeMarkdown
+	_, err := z.Send(msg)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func main() {
-	config := config.GetConfig("godrunk.yaml")
+	cfg := config.GetConfig("godrunk.yaml")
 
-	b, err := tgbotapi.NewBotAPI(config.Token)
+	b, err := tgbotapi.NewBotAPI(cfg.Token)
 	if err != nil {
 		log.Panic(err)
 	}
-	bot := &zupabot{b}
+	bot := &Bot{b}
 
-	bot.Debug = true
+	bot.Debug = cfg.Debug
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	webhookConfig := tgbotapi.NewWebhook(config.WebhookAddress)
+	webhookConfig := tgbotapi.NewWebhook(cfg.WebhookAddress)
 	_, err = bot.SetWebhook(webhookConfig)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	updates := bot.ListenForWebhook("/")
-	go http.ListenAndServe(fmt.Sprintf(":%v", config.Port), nil)
+	go http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), nil)
 
 	for update := range updates {
 		bot.handleUpdate(update)

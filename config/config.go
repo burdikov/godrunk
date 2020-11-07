@@ -7,12 +7,12 @@ import (
 	"os"
 )
 
-
 // Config represents application configuration
 type Config struct {
 	Token          string `yaml:"token" envconfig:"TOKEN"`
 	Port           int    `yaml:"port" envconfig:"PORT"`
 	WebhookAddress string `yaml:"webhookAddress" envconfig:"WEBHOOK_ADDRESS"`
+	Debug          bool   `yaml:"debug" envconfig:"DEBUG"`
 }
 
 // GetConfig retrieves application configuration
