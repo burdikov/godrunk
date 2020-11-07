@@ -102,11 +102,11 @@ func main() {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	webhookConfig := tgbotapi.NewWebhook(*cfg.WebhookAddress)
-	webhook, err := bot.SetWebhook(webhookConfig)
+	_, err = bot.SetWebhook(webhookConfig)
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Printf("Webhook is set: %v", webhook)
+	log.Print("Webhook is set.")
 
 	updates := bot.ListenForWebhook("/")
 	go http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), nil)
