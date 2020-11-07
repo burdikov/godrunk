@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: go get
+        working-directory: src
       - run: go test ./...
+        working-directory: src
   docker_build:
     needs: [test]
     runs-on: ubuntu-latest
