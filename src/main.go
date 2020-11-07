@@ -91,7 +91,7 @@ func (z *Bot) handleUpdate(update tgbotapi.Update) {
 func main() {
 	cfg := config.GetConfig("godrunk.yaml")
 
-	b, err := tgbotapi.NewBotAPI(cfg.Token)
+	b, err := tgbotapi.NewBotAPI(*cfg.Token)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -101,11 +101,12 @@ func main() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	webhookConfig := tgbotapi.NewWebhook(cfg.WebhookAddress)
-	_, err = bot.SetWebhook(webhookConfig)
+	webhookConfig := tgbotapi.NewWebhook(*cfg.WebhookAddress)
+	webhook, err := bot.SetWebhook(webhookConfig)
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Printf("Webhook is set: %v", webhook)
 
 	updates := bot.ListenForWebhook("/")
 	go http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), nil)

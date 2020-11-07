@@ -9,9 +9,9 @@ import (
 
 // Config represents application configuration
 type Config struct {
-	Token          string `yaml:"token" envconfig:"TOKEN"`
+	Token          *string `yaml:"token" envconfig:"TOKEN"`
 	Port           int    `yaml:"port" envconfig:"PORT"`
-	WebhookAddress string `yaml:"webhookAddress" envconfig:"WEBHOOK_ADDRESS"`
+	WebhookAddress *string `yaml:"webhookAddress" envconfig:"WEBHOOK_ADDRESS"`
 	Debug          bool   `yaml:"debug" envconfig:"DEBUG"`
 }
 

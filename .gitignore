@@ -2,4 +2,4 @@
 .vscode
 .debug
 __debug_bin
-godrunk.yaml
+**/godrunk.yaml
