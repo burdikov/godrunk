@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: go test ../.
-  docker build:
+  docker_build:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
