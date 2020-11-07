@@ -1,4 +1,5 @@
 # godrunk
+![CI](https://github.com/burdikov/godrunk/workflows/CI/badge.svg?branch=develop)
 ## Abstract
 Get drunk with friends!
 
