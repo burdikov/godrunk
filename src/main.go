@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"godrunk/config"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
+	"path"
 	"time"
 )
 
@@ -50,11 +55,17 @@ var cards = []Card{
 	{"Товарищ заебал", "Игрок, вытянувший эту карту, становится товарищем. Другим игрокам нельзя отвечать на его вопросы."},
 }
 
-var decks = make(map[int64][]*Card)
+var (
+	decks = make(map[int64][]*Card)
+
+	updatesProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "godrunk_updates_processed_total",
+	})
+)
 
 func createDeck() []*Card {
 	maxCards := 5
-	res := make([]*Card, 0, len(cards) * maxCards)
+	res := make([]*Card, 0, len(cards)*maxCards)
 	for i := 0; i < len(cards); i++ {
 		for j := 0; j < maxCards; j++ {
 			res = append(res, &cards[i])
@@ -86,6 +97,8 @@ func (z *Bot) handleUpdate(update tgbotapi.Update) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	updatesProcessed.Inc()
 }
 
 func main() {
@@ -101,14 +114,22 @@ func main() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	webhookConfig := tgbotapi.NewWebhook(*cfg.WebhookAddress)
+	webhookPrefix := url.PathEscape(*cfg.Token)
+	webhookUrl, err := url.Parse(*cfg.WebhookAddress)
+	if err != nil {
+		log.Fatal("Provided webhook address is not a valid URL")
+	}
+	webhookUrl.Path = path.Join(webhookUrl.Path, webhookPrefix)
+
+	webhookConfig := tgbotapi.NewWebhook(webhookUrl.String())
 	_, err = bot.SetWebhook(webhookConfig)
 	if err != nil {
 		log.Panic(err)
 	}
 	log.Print("Webhook is set.")
 
-	updates := bot.ListenForWebhook("/")
+	http.Handle("/metrics", promhttp.Handler())
+	updates := bot.ListenForWebhook("/" + webhookUrl.Path)
 	go http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), nil)
 
 	for update := range updates {

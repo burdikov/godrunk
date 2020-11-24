@@ -5,14 +5,15 @@ import (
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
+	"strings"
 )
 
 // Config represents application configuration
 type Config struct {
 	Token          *string `yaml:"token" envconfig:"TOKEN"`
-	Port           int    `yaml:"port" envconfig:"PORT"`
+	Port           int     `yaml:"port" envconfig:"PORT"`
 	WebhookAddress *string `yaml:"webhookAddress" envconfig:"WEBHOOK_ADDRESS"`
-	Debug          bool   `yaml:"debug" envconfig:"DEBUG"`
+	Debug          bool    `yaml:"debug" envconfig:"DEBUG"`
 }
 
 // GetConfig retrieves application configuration
@@ -40,5 +41,20 @@ func GetConfig(filename string) *Config {
 		log.Panic(err)
 	}
 
+	CheckConfig(config)
+
+	tmp := strings.TrimSpace(*config.WebhookAddress)
+	config.WebhookAddress = &tmp
+
 	return config
+}
+
+func CheckConfig(cfg *Config) {
+	if cfg.Token == nil {
+		log.Fatal("Bot token is not provided. Can't proceed.")
+	}
+
+	if cfg.WebhookAddress == nil {
+		log.Fatal("Webhook address is not provided. Can't proceed.")
+	}
 }
