@@ -46,15 +46,22 @@ func GetConfig(filename string) *Config {
 	tmp := strings.TrimSpace(*config.WebhookAddress)
 	config.WebhookAddress = &tmp
 
+	PrintConfig(config)
+
 	return config
 }
 
-func CheckConfig(cfg *Config) {
-	if cfg.Token == nil {
+func PrintConfig(config *Config) {
+	log.Printf("Port: %v", config.Port)
+	log.Printf("Webhook address: %v", *config.WebhookAddress)
+}
+
+func CheckConfig(config *Config) {
+	if config.Token == nil {
 		log.Fatal("Bot token is not provided. Can't proceed.")
 	}
 
-	if cfg.WebhookAddress == nil {
+	if config.WebhookAddress == nil {
 		log.Fatal("Webhook address is not provided. Can't proceed.")
 	}
 }

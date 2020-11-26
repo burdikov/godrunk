@@ -121,7 +121,7 @@ func main() {
 	}
 	webhookUrl.Path = path.Join(webhookUrl.Path, webhookPrefix)
 
-	webhookConfig := tgbotapi.NewWebhook(webhookUrl.String())
+	webhookConfig := tgbotapi.NewWebhookWithCert(webhookUrl.String(), "cert.pem")
 	_, err = bot.SetWebhook(webhookConfig)
 	if err != nil {
 		log.Panic(err)
@@ -129,10 +129,15 @@ func main() {
 	log.Print("Webhook is set.")
 
 	http.Handle("/metrics", promhttp.Handler())
-	updates := bot.ListenForWebhook("/" + webhookUrl.Path)
-	go http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), nil)
+	updates := bot.ListenForWebhook(fmt.Sprintf("/%v", webhookUrl.Path))
 
-	for update := range updates {
-		bot.handleUpdate(update)
-	}
+	go func() {
+		for update := range updates {
+			bot.handleUpdate(update)
+		}
+	}()
+
+	log.Printf("Starting server. Waiting for updates.")
+	err = http.ListenAndServeTLS(fmt.Sprintf(":%v", cfg.Port), "cert.pem", "key.pem", nil)
+	log.Fatal(err)
 }
