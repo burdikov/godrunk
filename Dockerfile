@@ -7,4 +7,5 @@ ENV PORT=8080
 EXPOSE 8080
 WORKDIR /bin
 COPY start.sh .
+RUN chmod +x start.sh
 CMD start.sh
